@@ -6,10 +6,10 @@ function downloadFile(){
   var colOEM = 7
   var colTypeSize = 8
   var colLink = 3
-  var rowStart = 195
-  var rowEnd = ss.getLastRow();
+  var rowStart = 2
+  // var rowEnd = ss.getLastRow();
   // var rowStart = 2
-  // var rowEnd = 300
+  var rowEnd = 2
 
   for(rowStart; rowStart <= rowEnd; rowStart++){
     Logger.log(rowStart);
@@ -24,21 +24,21 @@ function downloadFile(){
     }else{
       var filename = linkName;
     }
+    Logger.log(filename);
 
     var url = /"(.*?)"/.exec(range.getFormulaR1C1())[1];
     Logger.log(url);
     if(url != "http://#!"){
       var regExp = new RegExp("([a-zA-Z0-9-_]{33})"); 
       var fileID = regExp.exec(url)[1];
+      Logger.log(fileID);
       var files = DriveApp.getFileById(fileID);
+      Logger.log(fileID);
 
       var nameEqType = ss.getRange(rowStart, colEquipmentType).getValues();
       var nameOEM = ss.getRange(rowStart, colOEM).getValues();
       var nameTypeSize = ss.getRange(rowStart,colTypeSize).getValues();
       Logger.log(nameEqType);
-      Logger.log(nameOEM);
-      Logger.log(nameTypeSize);
-      Logger.log(filename);
 
       if (trackMerged.getValues() == ""){
         if (nameEqType == "#N/A"){
@@ -59,22 +59,15 @@ function downloadFile(){
           if(checkFolder(idOEM, nameTypeSize) == false){
             DriveApp.getFolderById(idOEM).createFolder(nameTypeSize);
           }
-            var idTypeSize = DriveApp.getFoldersByName(nameTypeSize).next().getId();
-
-          // var files = DriveApp.getFileById(fileID);
+          var idTypeSize = DriveApp.getFoldersByName(nameTypeSize).next().getId();
           DriveApp.getFolderById(idTypeSize).createFile(files).setName(filename);
-          // trackMerged.setValue("+");
         }else{
-          // var files = DriveApp.getFileById(fileID);
           DriveApp.getFolderById(idEqType).createFile(files).setName(filename);
-          // trackMerged.setValue("+");
         }
         trackMerged.setValue("+");
-        Logger.log("Saved");
       }
     }else{
         trackMerged.setValue("-");
-        Logger.log("Miss link");
         }
     }
 }
