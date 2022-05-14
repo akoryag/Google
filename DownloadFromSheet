@@ -6,10 +6,10 @@ function downloadFile(){
   var colOEM = 7
   var colTypeSize = 8
   var colLink = 3
-  var rowStart = 2
-  // var rowEnd = ss.getLastRow();
-  // var rowStart = 2
-  var rowEnd = 2
+  // var rowStart = 1794 //1495
+  // var rowEnd = 1796 //2000
+  var rowEnd = ss.getLastRow();
+  var rowStart = 2080
 
   for(rowStart; rowStart <= rowEnd; rowStart++){
     Logger.log(rowStart);
@@ -27,18 +27,17 @@ function downloadFile(){
     Logger.log(filename);
 
     var url = /"(.*?)"/.exec(range.getFormulaR1C1())[1];
-    Logger.log(url);
     if(url != "http://#!"){
       var regExp = new RegExp("([a-zA-Z0-9-_]{33})"); 
       var fileID = regExp.exec(url)[1];
-      Logger.log(fileID);
       var files = DriveApp.getFileById(fileID);
-      Logger.log(fileID);
 
       var nameEqType = ss.getRange(rowStart, colEquipmentType).getValues();
       var nameOEM = ss.getRange(rowStart, colOEM).getValues();
       var nameTypeSize = ss.getRange(rowStart,colTypeSize).getValues();
       Logger.log(nameEqType);
+      Logger.log(nameOEM);
+      Logger.log(nameTypeSize);
 
       if (trackMerged.getValues() == ""){
         if (nameEqType == "#N/A"){
@@ -49,22 +48,40 @@ function downloadFile(){
           folder.createFolder(nameEqType);
         }
           var idEqType = DriveApp.getFoldersByName(nameEqType).next().getId();
-        
+
         if (nameEqType != "Other"){
           if(checkFolder(idEqType, nameOEM) == false){
             DriveApp.getFolderById(idEqType).createFolder(nameOEM);
           }
-            var idOEM = DriveApp.getFoldersByName(nameOEM).next().getId();
-
+            var idOEM = DriveApp.getFolderById(idEqType).getFoldersByName(nameOEM).next().getId();
+        
           if(checkFolder(idOEM, nameTypeSize) == false){
             DriveApp.getFolderById(idOEM).createFolder(nameTypeSize);
           }
-          var idTypeSize = DriveApp.getFoldersByName(nameTypeSize).next().getId();
-          DriveApp.getFolderById(idTypeSize).createFile(files).setName(filename);
+            var idTypeSize = DriveApp.getFolderById(idOEM).getFoldersByName(nameTypeSize).next().getId();
+
+            if(checkFile(idTypeSize, filename) == false){
+              DriveApp.getFolderById(idTypeSize).createFile(files).setName(filename);
+              Logger.log("Create file done");
+            }else{Logger.log("File exist");}
+            if(checkFile(idTypeSize,filename) == false){
+              Logger.log("File does not exist")
+              trackMerged.setValue("-");
+            }else{
+              trackMerged.setValue("+"); 
+            }
         }else{
-          DriveApp.getFolderById(idEqType).createFile(files).setName(filename);
+          if(checkFile(idEqType, filename) == false){
+            DriveApp.getFolderById(idEqType).createFile(files).setName(filename);
+            Logger.log("Create file done");
+            }else{Logger.log("File exist");}
+            if(checkFile(idEqType, filename) == false){
+              Logger.log("File does not exist")
+              trackMerged.setValue("-");
+            }else{
+              trackMerged.setValue("+");
+            }
         }
-        trackMerged.setValue("+");
       }
     }else{
         trackMerged.setValue("-");
@@ -73,15 +90,27 @@ function downloadFile(){
 }
 
 function checkFolder(rootfolder, foldername){
-  var results;
+  var resultsFolder;
   var hasF  = DriveApp.getFolderById(rootfolder).getFoldersByName(foldername);
   //Нет папки
   if(!hasF.hasNext()){
-    results =  hasF.hasNext();
+    resultsFolder =  hasF.hasNext();
   }
   //Есть папка
   else{
-    results =  hasF.hasNext();
+    resultsFolder =  hasF.hasNext();
   }
-  return results;
+  return resultsFolder;
+}
+
+function checkFile(rootfolder, filename){
+  var resultsFile;
+  var hasFi = DriveApp.getFolderById(rootfolder).getFilesByName(filename);
+  if(!hasFi.hasNext()){
+    resultsFile = hasFi.hasNext();
+  }
+  else{
+    resultsFile = hasFi.hasNext();
+  }
+  return resultsFile;
 }
